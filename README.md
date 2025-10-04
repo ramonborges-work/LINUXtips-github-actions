@@ -63,6 +63,10 @@ O arquivo `02-tests-ci.yml` (Nível 2) demonstra:
 2. **Cobertura Mínima**: Validar cobertura mínima definida por `COVERAGE_MIN` (80%)
 3. **Certificado**: Gerar um artefato com seu certificado do nível 2 (level-2-certificate)
 
+## Edit p/ Concluir o Dia 1
+
+Ramon Silveira Borges
+
 ## Badges Conquistados
 
 Ao completar cada workflow com sucesso, você ganha os badges:
