@@ -54,7 +54,6 @@ jobs:
         run: |
           LOWERCASE=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}" | awk '{print tolower($0)}')
           echo "IMAGE_TAG=$LOWERCASE" >> ${GITHUB_ENV}
-          echo $IMAGE_TAG
 
       - name: "Build da imagem"
         id: build
@@ -63,13 +62,13 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: ${IMAGE_TAG}
+          tags: ${{ env.IMAGE_TAG }}
 
       - name: "Verificar vulnerabilidades com Trivy"
         id: container-scanning
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${IMAGE_TAG}
+          image-ref: ${{ env.IMAGE_TAG }}
           format: table
           output: trivy-report.txt
           exit-code: 1
@@ -88,7 +87,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${IMAGE_TAG}
+          tags: ${{ env.IMAGE_TAG }}
 
   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
     name: "Desafio Nível 3 - Certificado"
