@@ -37,8 +37,8 @@ jobs:
         id: report-hadolint
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-report
-          path: trivy-report.txt
+          name: hadolint-report
+          path: lint-report.txt
           retention-days: 30
 
       - name: "Login no GHCR"
