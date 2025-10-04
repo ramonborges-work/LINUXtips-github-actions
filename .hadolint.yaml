@@ -1,0 +1,5 @@
+failure-threshold: error
+override:
+  error:
+    - DL3006
+    - DL3018 # No desafio pede pra falhar se for 3008, mas a imagem é um alpine, não usa APK.

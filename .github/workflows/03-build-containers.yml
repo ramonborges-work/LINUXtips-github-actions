@@ -1,70 +1,136 @@
-# name: "Nível 3: Containers e Segurança"
+name: "Nível 3: Containers e Segurança"
 
-# on:
-#   pull_request:
-#     types: [closed]
-#     branches: [ desafio-nivel-3 ]
+on:
+  push:
+  pull_request:
+    types: [closed]
+    branches: [ desafio-nivel-3 ]
 
-# permissions:
-#   contents: read
-#   packages: write
+permissions:
+  contents: read
+  packages: write
 
-# env:
-#   CHALLENGE_LEVEL: 3
-#   CHALLENGE_NAME: "containers-e-seguranca"
-#   REGISTRY: ghcr.io
+env:
+  CHALLENGE_LEVEL: 3
+  CHALLENGE_NAME: "containers-e-seguranca"
+  REGISTRY: ghcr.io
 
-# jobs:
-#   build-scan-and-push:
-#     name: "Build, Lint, Trivy Scan e Push no GHCR"
-#     if: #????
-#     runs-on: ubuntu-latest
+jobs:
+  build-scan-and-push:
+    name: "Build, Lint, Trivy Scan e Push no GHCR"
+    #if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
 
-#     steps:
-#       # AQUI VAI O CÓDIGO DO DESAFIO :)
+    steps:
+      - name: "Checkout do repositório"
+        id: checkout
+        uses: actions/checkout@v5
 
-#   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
-#     name: "Desafio Nível 3 - Certificado"
-#     needs: build-scan-and-push
-#     if: success()
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: "Gerar certificado"
-#         run: |
-#           mkdir -p certificates
-#           cat > certificates/level-3-certificate.md << EOF
-#           # Certificado de Conclusão - Nível 3
+      - name: "Lint do Dockerfile via Hadolint"
+        id: hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./Dockerfile
+          output-file: lint-report.txt
 
-#           **Descomplicando Github Actions - GitHub Actions Edition**
-#           ---
+      - name: "Upload do resultado do Hadolint"
+        id: report-hadolint
+        uses: actions/upload-artifact@v4
+        with:
+          name: hadolint-report
+          path: lint-report.txt
+          retention-days: 30
 
-#           Este certificado atesta que **${{ github.actor }}** concluiu com sucesso:
-#           ## Nível 3: Containers e Segurança
+      - name: "Login no GHCR"
+        id: login-ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-#           **Competências desenvolvidas:**
-#           - Build de imagem Docker
-#           - Lint de Dockerfile com Hadolint
-#           - Scan de vulnerabilidades com Trivy (CRITICAL = 0)
-#           - Relatório de vulnerabilidades como artefato
-#           - Smoke test de execução do container
-#           - Publicação no GitHub Container Registry (GHCR) condicionada ao scan
-#           - Boas práticas de supply chain
+      - name: "Setar imagem para LowerCase"
+        id: normalize-tag
+        run: |
+          LOWERCASE=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}" | awk '{print tolower($0)}')
+          echo "IMAGE_TAG=$LOWERCASE" >> ${GITHUB_ENV}
 
-#           **Data de conclusão:** $(date)
-#           **Repositório:** ${{ github.repository }}
-#           **Workflow:** ${{ github.run_id }}
+      - name: "Build da imagem"
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: ${{ env.IMAGE_TAG }}
 
-#           ---
-#           **Badge conquistado:** Containers e Segurança
+      - name: "Verificar vulnerabilidades com Trivy"
+        id: container-scanning
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_TAG }}
+          format: table
+          output: trivy-report.txt
+          exit-code: 1
+          severity: CRITICAL
 
-#           ---
-#           *Certificado gerado automaticamente pelo GitHub Actions*
-#           *LINUXtips*
-#           EOF
+      - name: "Upload do resultado do Trivy"
+        id: report-trivy
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.txt
+          retention-days: 30
 
-#       - name: "Upload do certificado"
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: level-3-certificate
-#           path: certificates/
-#           retention-days: 30
+      - name: "Push da imagem"
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ env.IMAGE_TAG }}
+
+  generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
+    name: "Desafio Nível 3 - Certificado"
+    needs: build-scan-and-push
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Gerar certificado"
+        run: |
+          mkdir -p certificates
+          cat > certificates/level-3-certificate.md << EOF
+          # Certificado de Conclusão - Nível 3
+
+          **Descomplicando Github Actions - GitHub Actions Edition**
+          ---
+
+          Este certificado atesta que **${{ github.actor }}** concluiu com sucesso:
+          ## Nível 3: Containers e Segurança
+
+          **Competências desenvolvidas:**
+          - Build de imagem Docker
+          - Lint de Dockerfile com Hadolint
+          - Scan de vulnerabilidades com Trivy (CRITICAL = 0)
+          - Relatório de vulnerabilidades como artefato
+          - Smoke test de execução do container
+          - Publicação no GitHub Container Registry (GHCR) condicionada ao scan
+          - Boas práticas de supply chain
+
+          **Data de conclusão:** $(date)
+          **Repositório:** ${{ github.repository }}
+          **Workflow:** ${{ github.run_id }}
+
+          ---
+          **Badge conquistado:** Containers e Segurança
+
+          ---
+          *Certificado gerado automaticamente pelo GitHub Actions*
+          *LINUXtips*
+          EOF
+
+      - name: "Upload do certificado"
+        uses: actions/upload-artifact@v4
+        with:
+          name: level-3-certificate
+          path: certificates/
+          retention-days: 30
