@@ -1,6 +1,7 @@
 name: "Nível 3: Containers e Segurança"
 
 on:
+  push:
   pull_request:
     types: [closed]
     branches: [ desafio-nivel-3 ]
@@ -17,11 +18,25 @@ env:
 jobs:
   build-scan-and-push:
     name: "Build, Lint, Trivy Scan e Push no GHCR"
-    if: #????
+    #if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      # AQUI VAI O CÓDIGO DO DESAFIO :)
+      - name: "Login no GHCR"
+        id: login-ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build da imagem
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.commit_sha }}
 
   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
     name: "Desafio Nível 3 - Certificado"
