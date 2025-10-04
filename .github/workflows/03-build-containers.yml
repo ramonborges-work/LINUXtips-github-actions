@@ -22,8 +22,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out the repo
+      - name: "Checkout do repositório"
+        id: checkout
         uses: actions/checkout@v5
+
+      - name: "Lint do Dockerfile via Hadolint"
+        id: hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./Dockerfile
+          output-file: lint-report.txt
+
+      - name: "Upload do resultado do Hadolint"
+        id: report-hadolint
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.txt
+          retention-days: 30
 
       - name: "Login no GHCR"
         id: login-ghcr
@@ -33,12 +49,37 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build da imagem
+      - name: "Build da imagem"
         id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
+          push: false
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: "Verificar vulnerabilidades com Trivy"
+        id: container-scanning
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          format: table
+          output: trivy-report.txt
+          exit-code: 1
+          severity: CRITICAL
+
+      - name: "Upload do resultado do Trivy"
+        id: report-trivy
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.txt
+          retention-days: 30
+
+      - name: "Push da imagem"
+        id: push
+        uses: docker/build-push-action@v6
+        with:
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
 
