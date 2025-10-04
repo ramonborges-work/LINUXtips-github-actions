@@ -56,13 +56,13 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ env.REGISTRY@L }}/${{ github.repository_owner@L }}/${{ vars.IMAGE_NAME@L }}:${{ github.sha }}
 
       - name: "Verificar vulnerabilidades com Trivy"
         id: container-scanning
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ env.REGISTRY@L }}/${{ github.repository_owner@L }}/${{ vars.IMAGE_NAME@L }}:${{ github.sha }}
           format: table
           output: trivy-report.txt
           exit-code: 1
@@ -81,7 +81,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ env.REGISTRY@L }}/${{ github.repository_owner@L }}/${{ vars.IMAGE_NAME@L }}:${{ github.sha }}
 
   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
     name: "Desafio Nível 3 - Certificado"
