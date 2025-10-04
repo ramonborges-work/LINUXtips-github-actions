@@ -49,6 +49,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: "Setar imagem para LowerCase"
+        id: normalize-tag
+        run: |
+          echo "IMAGE_TAG=${{ env.REGISTRY@L }}/${{ github.repository_owner@L }}/${{ vars.IMAGE_NAME@L }}:${{ github.sha }}" >> ${GITHUB_ENV}
+
       - name: "Build da imagem"
         id: build
         uses: docker/build-push-action@v6
@@ -56,13 +61,13 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: ${{ env.REGISTRY@L }}/${{ github.repository_owner@L }}/${{ vars.IMAGE_NAME@L }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_TAG }}
 
       - name: "Verificar vulnerabilidades com Trivy"
         id: container-scanning
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ env.REGISTRY@L }}/${{ github.repository_owner@L }}/${{ vars.IMAGE_NAME@L }}:${{ github.sha }}
+          image-ref: ${{ env.IMAGE_TAG }}
           format: table
           output: trivy-report.txt
           exit-code: 1
@@ -81,7 +86,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ env.REGISTRY@L }}/${{ github.repository_owner@L }}/${{ vars.IMAGE_NAME@L }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_TAG }}
 
   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
     name: "Desafio Nível 3 - Certificado"
