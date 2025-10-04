@@ -26,7 +26,7 @@ jobs:
         id: login-ghcr
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -36,7 +36,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.commit_sha }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
 
   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
     name: "Desafio Nível 3 - Certificado"
