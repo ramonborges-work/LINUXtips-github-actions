@@ -30,14 +30,16 @@ jobs:
       - name: "Instalar Dependências"
         id: build
         run: |
-          - echo "Instalando dependências..."
-          - npm ci
+          echo "Instalando dependências..."
+          npm ci
+          echo "Dependências instaladas com sucesso"
 
       - name: "Executar testes"
         id: unit-test
         run: |
-          - echo "Executando testes unitários..."
-          - npm run tests
+          echo "Executando testes unitários..."
+          npm run tests
+          echo "Testes executados com sucesso"
       
       - name: "Extrair porcentagem de cobertura" # Esse step será validado pelo desafio, não altere o nome. No final, ele deve gerar o output "coverage" com a porcentagem de cobertura.
         id: coverage
@@ -45,6 +47,13 @@ jobs:
           COVERAGE=$(npx nyc report --reporter=text-summary | grep -oP 'Statements\s*:\s*\K[0-9\.]+(?=%)' | head -1)
           echo "Coverage: $COVERAGE%"
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+
+      - name: "Garantindo cobertura acima de 80%"
+        id: coverage-checkout
+        if: ${{ steps.coverage.outputs.coverage < env.COVERAGE_MIN }}
+        run: |
+          echo "Cobetura inferior a 80%"
+          exit 1
 
   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
       name: "Desafio Nível 2 - Certificado"
