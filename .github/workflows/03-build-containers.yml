@@ -1,7 +1,6 @@
 name: "Nível 3: Containers e Segurança"
 
 on:
-  push:
   pull_request:
     types: [closed]
     branches: [ desafio-nivel-3 ]
@@ -18,7 +17,7 @@ env:
 jobs:
   build-scan-and-push:
     name: "Build, Lint, Trivy Scan e Push no GHCR"
-    #if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
